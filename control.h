@@ -78,7 +78,7 @@ void control_args_init(struct control_args_t *control_args);
 void pid_zoh(struct control_args_t *args, double Kp, double Ki, double Kd, int t);
 void control_set_ref(struct control_args_t *control_args, double ref);
 void plant_config(struct control_args_t *control_args, void (*actuator)(double input), double bias, double max, double min);
-void feedback_config(struct control_args_t *control_args, double (*sensor)(void), unsigned long int poll_interval)
+void feedback_config(struct control_args_t *control_args, double (*sensor)(void), unsigned long int poll_interval);
 int closed_loop_start(struct control_args_t *control_args);
 int closed_loop_stop(struct control_args_t *control_args);
 

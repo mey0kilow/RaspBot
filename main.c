@@ -1,6 +1,8 @@
 #include <RTIMULib.h>
 #include <gps.h>
 #include "control.h"
+#include "i2c.h"
+#include "pca9685.h"
 
 #define USAGE_STRING "Usage: %s Kp Ki Kd t marks.txt\n"
 
@@ -9,7 +11,7 @@
 #define DIRECTION_MIN 0		/*TODO*/
 #define DIRECTION_CHANNEL 99/*TODO*/
 
-RTIMU imu;
+RTIMU *imu = RTIMU::createIMU(new RTIMUSettings("RTIMULib"));
 i2c bus;
 
 void direction(double input)
@@ -19,7 +21,7 @@ void direction(double input)
 
 double get_angle(void)
 {
-	RTIMU_DATA imuData = imu.getIMUData();
+	RTIMU_DATA imuData = imu->getIMUData();
 	return imuData.fusionPose.z();
 }
 
@@ -64,5 +66,5 @@ int main(int argc, char *argv[])
 	pid_zoh(&control_args, Kp, Ki, Kd, t);
 
 	plant_config(&control_args, direction, DIRECTION_MID, DIRECTION_MAX, DIRECTION_MIN);
-	feedback_config(&control_args, get_angle, imu.IMUGetPollInterval()*1000000);
+	feedback_config(&control_args, get_angle, imu->IMUGetPollInterval()*1000000);
 }

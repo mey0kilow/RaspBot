@@ -11,7 +11,9 @@
 #define DIRECTION_MIN 0		/*TODO*/
 #define DIRECTION_CHANNEL 99/*TODO*/
 
-RTIMU *imu = RTIMU::createIMU(new RTIMUSettings("RTIMULib"));
+#define I2C_DEV "/dev/i2c-1"
+
+RTIMU *imu;
 i2c bus;
 
 void direction(double input)
@@ -56,7 +58,19 @@ int main(int argc, char *argv[])
 
 	/*TODO: check arguments*/
 
-	/*TODO: IMU initialization*/
+	/*IMU initialization*/
+	imu = RTIMU::createIMU(new RTIMUSettings("RTIMULib"));
+	if((imu == NULL) || (imu->IMUType() == RTIMU_TYPE_NULL)) {
+		fprintf(stderr, "No IMU found\n");
+		exit(EXIT_FAILURE);
+	}
+
+	imu->IMUInit();
+
+	imu->setSlerpPower(0.02);
+	imu->setGyroEnable(true);
+	imu->setAccelEnable(true);
+	imu->setCompassEnable(true);
 
 	/*TODO: I2C bus initialization*/
 

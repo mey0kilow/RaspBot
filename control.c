@@ -52,6 +52,8 @@ void *closed_loop(void *args)
 			ts.tv_sec++;
 		}
 	}
+
+	return NULL;
 }
 
 /* Consumer of "action" semaphore, send the control action to the motors*/
@@ -80,6 +82,8 @@ void *plant(void *args)
 
 		pthread_mutex_unlock(&arg->plant.mutex);
 	}
+
+	return NULL;
 }
 
 void *feedback(void *args)
@@ -125,6 +129,8 @@ void *feedback(void *args)
 		}
 
 	}
+
+	return NULL;
 }
 
 void control_args_init(struct control_args_t *args)

@@ -10,11 +10,18 @@
 #define DIRECTION_MAX 100	/*TODO*/
 #define DIRECTION_MIN 0		/*TODO*/
 #define DIRECTION_CHANNEL 99/*TODO*/
+#define NMARKS 3
+#define BUFSIZE 32
 
 #define I2C_DEV "/dev/i2c-1"
 
+struct pos_t {
+	double latitude, longitude;
+};
+
 RTIMU *imu;
 i2c bus;
+struct pos_t mark[NMARKS];
 
 void direction(double input)
 {
@@ -42,11 +49,12 @@ void *gps_monitor(void *args)
 
 int main(int argc, char *argv[])
 {
-	int t;
+	int t, i, ret, marks_file;
 	double Kp, Ki, Kd;
 	struct control_args_t control_args;
+	char buf[BUFSIZE];
 
-	if(argc < 5) {
+	if(argc < 6) {
 		fprintf(stderr, USAGE_STRING, argv[0]);
 		exit(EXIT_FAILURE);
 	}
@@ -58,7 +66,30 @@ int main(int argc, char *argv[])
 
 	/*TODO: check arguments*/
 
+	/*Open/parsing marks.txt*/
+	marks_file = open(argv[5], O_RDONLY);
+	if(marks_file < 0) {
+		fprintf(stderr, "Cannot open '%s' for read\n", argv[5]);
+		exit(EXIT_FAILURE);
+	}
+
+	for(i = 0; i < NMARKS;) {
+		fgets(buf, BUFSIZE, marks_file);
+		ret = sscanf(buf, "Median: %f,%f\n", &mark[i].latitude, &mark[i].longitude);
+		if(ret == EOF) {
+			fprintf(stderr, "Fail to read %d marks from %s\n", NMARKS, argv[5]);
+			close(marks_file);
+			exit(EXIT_FAILURE);
+		}
+		if(ret > 0) {
+			i++;
+		}
+	}
+
+	close(marks_file);
+
 	/*IMU initialization*/
+	/*TODO: RTIMULib should use SPI*/
 	imu = RTIMU::createIMU(new RTIMUSettings("RTIMULib"));
 	if((imu == NULL) || (imu->IMUType() == RTIMU_TYPE_NULL)) {
 		fprintf(stderr, "No IMU found\n");
@@ -72,9 +103,12 @@ int main(int argc, char *argv[])
 	imu->setAccelEnable(true);
 	imu->setCompassEnable(true);
 
-	/*TODO: I2C bus initialization*/
-
-	/*TODO: Open/parsing marks.txt*/
+	/*I2C bus initialization*/
+	bus = i2cOpen("/dev/i2c-1");
+	if(bus == NULL) {
+		perror("i2cOpen fail");
+		exit(EXIT_FAILURE);
+	}
 
 	control_args_init(&control_args);
 	pid_zoh(&control_args, Kp, Ki, Kd, t);

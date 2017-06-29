@@ -1,10 +1,18 @@
 # Compile opetion
-cc=gcc
-cxx=g++
-OPTS=-ggdb -Wall
+CC=gcc
+CXX=g++
+
+BASE_DIR=$(shell pwd)
+
+# Include options
+INCLUDE_DIRS=-I$(BASE_DIR)/i2c -I$(BASE_DIR)/PCA9685
 
 # Link option
 LINKS=-pthread -lm -lgps
+
+# CFLAGS and LDFLAGS
+CFLAGS=-ggdb -Wall $(INCLUDE_DIRS)
+LDFLAGS=
 
 # Compile Objects
 OBJECTS=control.o
@@ -12,7 +20,7 @@ OBJECTS=control.o
 all: main
 
 main: main.c $(OBJECTS)
-	$(CXX) $(OBJECTS) main.c -o main $(LINKS) $(OPTS)
+	$(CXX) $(OBJECTS) main.c -o main $(CFLAGS) $(LDFLAGS) $(LINKS)
 
 $(OBJECTS): %.o: %.c
-	$(CXX) $< -c $(LINKS) $(OPTS) $(LINKS)
+	$(CXX) $< -c $(CFLAGS) $(LDFLAGS)

@@ -8,7 +8,7 @@ BASE_DIR=$(shell pwd)
 INCLUDE_DIRS=-I$(BASE_DIR) -I$(BASE_DIR)/i2c -I$(BASE_DIR)/PCA9685
 
 # Link option
-LINKS=-pthread -lm -lgps
+LINKS=-pthread -lm -lgps -lRTIMULib
 
 # CFLAGS and LDFLAGS
 CFLAGS+=-ggdb -Wall $(INCLUDE_DIRS)

@@ -1,7 +1,7 @@
 #include <RTIMULib.h>
 #include "navigation.h"
 #include "control.h"
-#include "i2c/i2c.h"
+#include "i2c.h"
 #include "pca9685.h"
 
 #define USAGE_STRING "Usage: %s Kp Ki Kd t marks.txt\n"
@@ -36,10 +36,9 @@ void *gps_monitor(void *args)
 {
 	struct control_args_t *arg = (struct control_args_t *)args;
 	struct timespec ts;
-	struct gps_data_t actual_pos;
-	double last_time;
+	struct pos_t actual_pos;
 
-	clock_gettime(CLOCK_MONOTONIC, &t);
+	clock_gettime(CLOCK_MONOTONIC, &ts);
 
 	while(actual_mark < NMARKS) {
 		while(arg->running) {
@@ -59,13 +58,13 @@ void *gps_monitor(void *args)
 					actual_pos.longitude = gps.fix.longitude;
 
 					/*Lock feedback structure*/
-					pthread_mutex_lock(arg->feedback.mutex);
+					pthread_mutex_lock(&arg->feedback.mutex);
 
 					/*Set the new reference*/
 					arg->feedback.ref = azimuth(actual_pos, mark[actual_mark]);
 
 					/*Unlock feedback structure*/
-					pthread_mutex_unlock(arg->feedback.mutex);
+					pthread_mutex_unlock(&arg->feedback.mutex);
 
 					/*TODO: check if it is close enough to start the camera with haversine function*/
 				} else {
@@ -85,29 +84,32 @@ void *gps_monitor(void *args)
 
 		actual_mark++;
 	}
+
+	return NULL;
 }
 
 int main(int argc, char *argv[])
 {
-	int t, i, ret, marks_file;
+	int t, i, ret;
 	double Kp, Ki, Kd;
 	struct control_args_t control_args;
 	char buf[BUFSIZE];
+	FILE *marks_file;
 
 	if(argc < 6) {
 		fprintf(stderr, USAGE_STRING, argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
-	sscanf(argv[1], "%f", &Kp);
-	sscanf(argv[2], "%f", &Ki);
-	sscanf(argv[3], "%f", &Kd);
+	sscanf(argv[1], "%lf", &Kp);
+	sscanf(argv[2], "%lf", &Ki);
+	sscanf(argv[3], "%lf", &Kd);
 	sscanf(argv[4], "%d", &t);
 
 	/*TODO: check arguments*/
 
 	/*Open/parsing marks.txt*/
-	marks_file = open(argv[5], O_RDONLY);
+	marks_file = fopen(argv[5], "r");
 	if(marks_file < 0) {
 		fprintf(stderr, "Cannot open '%s' for read\n", argv[5]);
 		exit(EXIT_FAILURE);
@@ -118,13 +120,13 @@ int main(int argc, char *argv[])
 		fgets(buf, BUFSIZE, marks_file);
 
 		/*Scan a "median" line*/
-		ret = sscanf(buf, "Median: %f,%f\n", &mark[i].latitude, &mark[i].longitude);
+		ret = sscanf(buf, "Median: %lf,%lf\n", &mark[i].latitude, &mark[i].longitude);
 
 		/*If reach the end of the file*/
 		if(ret == EOF) {
 			/*Something is wrong*/
 			fprintf(stderr, "Fail to read %d marks from %s\n", NMARKS, argv[5]);
-			close(marks_file);
+			fclose(marks_file);
 			exit(EXIT_FAILURE);
 		}
 
@@ -135,7 +137,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	close(marks_file);
+	fclose(marks_file);
 	actual_mark = 0;
 
 	/*IMU initialization*/
@@ -154,16 +156,16 @@ int main(int argc, char *argv[])
 	imu->setCompassEnable(true);
 
 	/*I2C bus initialization*/
-	bus = i2cOpen("/dev/i2c-1");
+	bus = i2c_open("/dev/i2c-1");
 	if(bus == NULL) {
-		perror("i2cOpen fail");
+		perror("i2c_open fail");
 		exit(EXIT_FAILURE);
 	}
 
 	/*GPS initialization*/
 	if(gps_open(GPSD_SHARED_MEMORY, NULL, &gps)) {
 		perror("Cannot connect to gpsd daemon");
-		i2cClose(bus);
+		i2c_close(bus);
 		exit(EXIT_FAILURE);
 	}
 

@@ -1,4 +1,4 @@
-#include "gps.h"
+#include "navigation.h"
 
 double azimuth(struct pos_t source, struct pos_t dest)
 {

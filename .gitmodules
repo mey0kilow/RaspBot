@@ -1,3 +1,7 @@
 [submodule "RTIMULib2"]
 	path = RTIMULib2
 	url = https://github.com/RTIMULib/RTIMULib2
+
+[submodule "i2c"]
+	path = I2C
+	url = https://github.com/mey0kilow/i2c

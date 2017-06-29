@@ -4,7 +4,7 @@ cxx=g++
 OPTS=-ggdb -Wall
 
 # Link option
-LINKS=-pthread -lm
+LINKS=-pthread -lm -lgps
 
 # Compile Objects
 OBJECTS=control.o

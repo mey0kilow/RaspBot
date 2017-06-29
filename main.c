@@ -1,5 +1,5 @@
 #include <RTIMULib.h>
-#include <gps.h>
+#include "gps.h"
 #include "control.h"
 #include "i2c.h"
 #include "pca9685.h"
@@ -15,13 +15,11 @@
 
 #define I2C_DEV "/dev/i2c-1"
 
-struct pos_t {
-	double latitude, longitude;
-};
-
 RTIMU *imu;
 i2c bus;
 struct pos_t mark[NMARKS];
+int actual_mark;
+struct gps_data_t gps;
 
 void direction(double input)
 {
@@ -38,12 +36,54 @@ void *gps_monitor(void *args)
 {
 	struct control_args_t *arg = (struct control_args_t *)args;
 	struct timespec t;
+	struct gps_data_t actual_pos;
 	double last_time;
 
 	clock_gettime(CLOCK_MONOTONIC, &t);
 
-	while(true) {
-		/*TODO*/
+	while(actual_mark < NMARKS) {
+		while(arg->running) {
+			/*Wait for next execution. Sleep again if interrupted*/
+			while(clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL));
+
+			/*get time*/
+			clock_gettime(CLOCK_MONOTONIC, &ts);
+
+			/*Read */
+			if(gps_read(&gps) < 0) {
+				perror("GPS read fail");
+			} else {
+				if(gps.set && gps.status) {
+					/*Get actual position*/
+					actual_pos.latitude = gps.fix.latitude;
+					actual_pos.longitude = gps.fix.longitude;
+
+					/*Lock feedback structure*/
+					pthread_mutex_lock(arg->feedback.mutex);
+
+					/*Set the new reference*/
+					arg->feedback.ref = azimuth(actual_pos, mark[actual_mark]);
+
+					/*Unlock feedback structure*/
+					pthread_mutex_unlock(arg->feedback.mutex);
+
+					/*TODO: check if it is close enough to start the camera with haversine function*/
+				} else {
+					fprintf(stderr, "GPS read fail: no fix yet");
+				}
+			}
+
+			/*Calculate the time of the next execution*/
+			ts.tv_nsec += GPS_POLL_TIME;
+
+			/*Prevent tv_nsec overflow*/
+			while(ts.tv_nsec >= 1e9) {
+				ts.tv_nsec -= 1e9;
+				ts.tv_sec++;
+			}
+		}
+
+		actual_mark++;
 	}
 }
 
@@ -74,19 +114,29 @@ int main(int argc, char *argv[])
 	}
 
 	for(i = 0; i < NMARKS;) {
+		/*read file until '\n'*/
 		fgets(buf, BUFSIZE, marks_file);
+
+		/*Scan a "median" line*/
 		ret = sscanf(buf, "Median: %f,%f\n", &mark[i].latitude, &mark[i].longitude);
+
+		/*If reach the end of the file*/
 		if(ret == EOF) {
+			/*Something is wrong*/
 			fprintf(stderr, "Fail to read %d marks from %s\n", NMARKS, argv[5]);
 			close(marks_file);
 			exit(EXIT_FAILURE);
 		}
+
+		/*If it have at least one match*/
 		if(ret > 0) {
+			/*Advance*/
 			i++;
 		}
 	}
 
 	close(marks_file);
+	actual_mark = 0;
 
 	/*IMU initialization*/
 	/*TODO: RTIMULib should use SPI*/
@@ -107,6 +157,13 @@ int main(int argc, char *argv[])
 	bus = i2cOpen("/dev/i2c-1");
 	if(bus == NULL) {
 		perror("i2cOpen fail");
+		exit(EXIT_FAILURE);
+	}
+
+	/*GPS initialization*/
+	if(gps_open(GPSD_SHARED_MEMORY, NULL, &gps)) {
+		perror("Cannot connect to gpsd daemon");
+		i2cClose(bus);
 		exit(EXIT_FAILURE);
 	}
 

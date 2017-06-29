@@ -1,7 +1,7 @@
 #include <RTIMULib.h>
 #include "gps.h"
 #include "control.h"
-#include "i2c.h"
+#include "i2c/i2c.h"
 #include "pca9685.h"
 
 #define USAGE_STRING "Usage: %s Kp Ki Kd t marks.txt\n"

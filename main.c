@@ -1,5 +1,5 @@
 #include <RTIMULib.h>
-#include "gps.h"
+#include "navigation.h"
 #include "control.h"
 #include "i2c/i2c.h"
 #include "pca9685.h"
@@ -35,7 +35,7 @@ double get_angle(void)
 void *gps_monitor(void *args)
 {
 	struct control_args_t *arg = (struct control_args_t *)args;
-	struct timespec t;
+	struct timespec ts;
 	struct gps_data_t actual_pos;
 	double last_time;
 

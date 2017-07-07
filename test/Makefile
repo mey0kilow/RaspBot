@@ -2,10 +2,10 @@
 CC=gcc
 CXX=g++
 
-BASE_DIR=$(shell pwd)
+BASE_DIR=$(shell pwd)/..
 
 # Include options
-INCLUDE_DIRS=-I$(BASE_DIR) -I$(BASE_DIR)/i2c -I$(BASE_DIR)/PCA9685
+INCLUDE_DIRS=-I$(BASE_DIR) -I$(BASE_DIR)/i2c -I$(BASE_DIR)/PCA9685 -I$(BASE_DIR)/TCS3472
 
 # Link option
 LINKS=-pthread -lm -lgps -lRTIMULib
@@ -15,7 +15,7 @@ CFLAGS+=-ggdb -Wall $(INCLUDE_DIRS)
 LDFLAGS+=
 
 # Compile Objects
-OBJECTS=../control.o ../i2c/i2c.o ../PCA9685/pca9685.o ../navigation.o
+OBJECTS=../i2c/i2c.o ../control.o ../PCA9685/pca9685.o ../navigation.o ../TCS3472/tcs3472.o
 
 all: direction
 

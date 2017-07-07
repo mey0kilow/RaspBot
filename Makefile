@@ -1,4 +1,4 @@
-# Compile opetion
+# Compile option
 CC=gcc
 CXX=g++
 

@@ -3,6 +3,7 @@
 #include "control.h"
 #include "i2c.h"
 #include "pca9685.h"
+#include "tcs3472.h"
 
 #define USAGE_STRING "Usage: %s Kp Ki Kd t ref\n"
 
@@ -38,7 +39,7 @@ double get_angle(void)
 
 int main(int argc, char *argv[])
 {
-	int t, i, ret;
+	int t;
 	double Kp, Ki, Kd, ref;
 	struct control_args_t control_args;
 	color currentColor;
@@ -55,13 +56,6 @@ int main(int argc, char *argv[])
 	sscanf(argv[5], "%lf", &ref);
 
 	/*TODO: check arguments*/
-
-	/*Open/parsing marks.txt*/
-	marks_file = fopen(argv[5], "r");
-	if(marks_file < 0) {
-		fprintf(stderr, "Cannot open '%s' for read\n", argv[5]);
-		exit(EXIT_FAILURE);
-	}
 
 	/*IMU initialization*/
 	/*TODO: RTIMULib should use SPI*/
@@ -104,7 +98,7 @@ int main(int argc, char *argv[])
 	TCS3472_setIntegrationTime(bus, TCS3472_ATIME_24MS);
 
 	/*Enable RGB sensor*/
-	TCS3472_powerOn(rgb);
+	TCS3472_powerOn(bus);
 
 	/*Start controll loop*/
 	closed_loop_start(&control_args);
@@ -115,10 +109,10 @@ int main(int argc, char *argv[])
 	PCA9685_setDutyCicle(bus, ESC_CHANNEL, 51);
 
 	/*Check for white*/
-	TCS3472_getColor(rgb, &currentColor);
+	TCS3472_getColor(bus, &currentColor);
 
 	while(currentColor.red < WHITE_TRESHOLD && currentColor.green < WHITE_TRESHOLD && currentColor.blue < WHITE_TRESHOLD) {
-		TCS3472_getColor(rgb, &currentColor);
+		TCS3472_getColor(bus, &currentColor);
 	}
 
 	/*Stop*/

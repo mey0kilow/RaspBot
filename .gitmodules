@@ -8,3 +8,6 @@
 [submodule "PCA9685"]
 	path = PCA9685
 	url = https://github.com/lcthums/PCA9685
+[submodule "TCS3472"]
+	path = TCS3472
+	url = https://github.com/lcthums/TCS3472

@@ -7,9 +7,9 @@
 #define USAGE_STRING "Usage: %s Kp Ki Kd t marks.txt\n"
 
 #define DIRECTION_MID 50
-#define DIRECTION_MAX 100	/*TODO*/
-#define DIRECTION_MIN 0		/*TODO*/
-#define DIRECTION_CHANNEL 99/*TODO*/
+#define DIRECTION_MAX 60
+#define DIRECTION_MIN 40
+#define DIRECTION_CHANNEL 0
 #define NMARKS 3
 #define BUFSIZE 32
 
@@ -174,4 +174,7 @@ int main(int argc, char *argv[])
 
 	plant_config(&control_args, direction, DIRECTION_MID, DIRECTION_MAX, DIRECTION_MIN);
 	feedback_config(&control_args, get_angle, imu->IMUGetPollInterval()*1000000);
+
+	/*TODO: launch gps thread*/
+	/*TODO: Fail-safe monitor*/
 }

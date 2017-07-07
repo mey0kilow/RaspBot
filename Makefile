@@ -15,7 +15,7 @@ CFLAGS+=-ggdb -Wall $(INCLUDE_DIRS)
 LDFLAGS+=
 
 # Compile Objects
-OBJECTS=control.o i2c/i2c.o PCA9685/pca9685.o navigation.o
+OBJECTS=control.o i2c/i2c.o PCA9685/pca9685.o navigation.o TCS3472/tcs3472.o
 
 all: main
 

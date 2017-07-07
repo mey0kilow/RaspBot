@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 	control_set_ref(&control_args, ref);
 
 	/*Configure RGB Sensor*/
-	TCS3472_setIntegrationTime(bus, ATIME_24MS);
+	TCS3472_setIntegrationTime(bus, TCS3472_ATIME_24MS);
 
 	/*Enable RGB sensor*/
 	TCS3472_powerOn(rgb);
